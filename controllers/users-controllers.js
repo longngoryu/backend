@@ -4,17 +4,15 @@ const { validationResult } = require("express-validator");
 const HttpError = require("../models/http-error");
 const User = require("../models/user");
 
-const DUMMY_USERS = [
-  {
-    id: "u1",
-    name: "Max Schwarz",
-    email: "test@test.com",
-    password: "testers",
-  },
-];
+async function getUsers(req, res, next) {
+  let users;
+  try {
+    users = await User.find({}, "-password");
+  } catch (error) {
+    next(new HttpError("Fetching users failed, please try again later.", 500));
+  }
 
-function getUsers(req, res, next) {
-  res.json({ users: DUMMY_USERS });
+  res.json({ users: users.map((user) => user.toObject({ getters: true })) });
 }
 
 async function signup(req, res, next) {
@@ -23,7 +21,7 @@ async function signup(req, res, next) {
     next(new HttpError("Invalid inputs passed, please check your data.", 422));
   }
 
-  const { name, email, password, places } = req.body;
+  const { name, email, password, image } = req.body;
   let existingUser;
 
   try {
@@ -46,9 +44,8 @@ async function signup(req, res, next) {
     name,
     email,
     password,
-    image:
-      "https://ben.com.vn/tin-tuc/wp-content/uploads/2021/12/anh-che-cho-hai-huoc-cho-dien-thoai-7.jpg",
-    places,
+    image,
+    places: [],
   });
 
   try {
